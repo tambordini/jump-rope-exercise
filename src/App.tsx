@@ -2,6 +2,12 @@ import { useEffect, useState } from "react";
 import { Button } from "./components/button";
 import { Input } from "./components/input";
 import { Label } from "./components/label";
+import {
+  playCountdown,
+  playFinishSet,
+  playFinishWorkout,
+  playSound,
+} from "./utils/sounds";
 
 export default function App() {
   const [time, setTime] = useState(40);
@@ -35,16 +41,25 @@ export default function App() {
       }, 1000);
     } else if (isActive && time === 0) {
       if (isResting) {
+        // จบช่วงพัก เริ่มออกกำลังกาย
         setIsResting(false);
         setTime(jumpDuration);
+        // เล่นเสียงเริ่มการกระโดด
+        playSound("start");
       } else {
         setSets((sets) => sets + 1);
         if (sets + 1 >= totalSets) {
+          // จบการออกกำลังกายทั้งหมด
           setIsActive(false);
           setIsResting(false);
+          // เล่นเสียงเมื่อจบการออกกำลังกายทั้งหมด
+          playFinishWorkout();
         } else {
+          // จบเซ็ทหนึ่ง เข้าสู่ช่วงพัก
           setIsResting(true);
           setTime(restTime);
+          // เล่นเสียงเมื่อจบเซ็ทหนึ่ง
+          playFinishSet();
         }
       }
     } else {
@@ -53,8 +68,14 @@ export default function App() {
     return () => clearInterval(interval);
   }, [isActive, time, isResting, restTime, jumpDuration, sets, totalSets]);
 
-  const toggleTimer = () => {
-    setIsActive(!isActive);
+  const toggleTimer = async () => {
+    if (!isActive) {
+      // เล่นเสียงนับถอยหลัง 3-2-1 ก่อนเริ่ม
+      await playCountdown();
+      setIsActive(true);
+    } else {
+      setIsActive(false);
+    }
   };
 
   const resetTimer = () => {
